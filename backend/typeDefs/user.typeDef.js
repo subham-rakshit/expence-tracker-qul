@@ -9,8 +9,6 @@ const userTypeDef = `#graphql
  }
 
  type Query {
-  users: [User!] # get all users and response as an array with not null value
-
   authUser: User # if user authenticated then return user else return null. so we don't use !
 
   user(userId: ID!): User

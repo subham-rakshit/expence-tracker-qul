@@ -1,15 +1,113 @@
 import { users } from "../dummyData/data.js";
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
 
 const useResolver = {
-  Query: {
-    users: (parent, args, context, info) => {
-      return users;
+  Mutation: {
+    signUp: async (_, { input }, context) => {
+      try {
+        const { username, name, password, gender } = input;
+
+        if (!username || !name || !password || !gender) {
+          throw new Error("All fields are required");
+        }
+
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+          throw new Error("User already exists");
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // API for create profile picture
+        // https://avatar-placeholder.iran.liara.run/
+        const boyProfilePic = `https://avatar-placeholder.iran.liara.run/public/boy?username=${username}`;
+        const girlProfilePic = `https://avatar-placeholder.iran.liara.run/public/girl?username=${username}`;
+
+        const newUser = new User({
+          username,
+          name,
+          password: hashedPassword,
+          profilePicture: gender === "male" ? boyProfilePic : girlProfilePic,
+          gender,
+        });
+
+        await newUser.save();
+        await context.login(newUser);
+        return newUser;
+      } catch (error) {
+        console.error("Error in signup: ", error);
+
+        throw new Error(error.message || "Internal server error");
+      }
     },
-    user: (_, {userId}) => {
-      return users.find(user => user._id === userId);
+
+    login: async (_, { input }, context) => {
+      try {
+        const { username, password } = input;
+        if (!username || !password) {
+          throw new Error("username or password is required");
+        }
+
+        const { user } = await context.authenticate("graphql-local", {
+          username,
+          password,
+        });
+
+        if (!user) {
+          throw new Error("Invalid username or password");
+        }
+
+        await context.login(user);
+        return user;
+      } catch (error) {
+        console.error("Error in login: ", error);
+
+        throw new Error(error.message || "Internal server error");
+      }
+    },
+
+    logout: async (_, __, context) => {
+      try {
+        await context.logout();
+        req.session.destroy((err) => {
+          if (err) throw err;
+        });
+        res.clearCookie("connect.sid");
+
+        return { message: "Logged out successfully" };
+      } catch (error) {
+        console.error("Error in logout: ", error);
+
+        throw new Error(error.message || "Internal server error");
+      }
     },
   },
-  Mutation: {},
+
+  Query: {
+    authUser: async (_, __, context) => {
+      try {
+        const user = await context.getUser();
+        return user;
+      } catch (error) {
+        console.error("Error in authUser: ", error);
+
+        throw new Error("Internal server error");
+      }
+    }
+    user: async (_, { userId }, context) => {
+      try {
+        const user = await User.findById(userId);
+        return user;
+      } catch (error) {
+        console.error("Error in user query: ", error);
+
+        throw new Error(error.message || "Error getting user");
+      }
+    }
+  },
+  // TODO => Add USER/TRANSACTION RELATION
 };
 
 export default useResolver;

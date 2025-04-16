@@ -68,7 +68,7 @@ app.use(express.json());
 app.use(
   "/graphql",
   expressMiddleware(server, {
-    context: async ({ req }) => buildContext({ req }),
+    context: async ({ req, res }) => buildContext({ req, res }),
   })
 );
 
