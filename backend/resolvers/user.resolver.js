@@ -95,7 +95,7 @@ const useResolver = {
 
         throw new Error("Internal server error");
       }
-    }
+    },
     user: async (_, { userId }, context) => {
       try {
         const user = await User.findById(userId);
