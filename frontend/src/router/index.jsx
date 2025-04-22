@@ -9,15 +9,24 @@ import {
 } from "../pages";
 import PublicRoute from "./PublicRoute";
 import PublicLayout from "../layout/PublicLayout";
+import AuthRoute from "./AuthRoute";
 
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />,
+    element: (
+      <AuthRoute>
+        <LoginPage />
+      </AuthRoute>
+    ),
   },
   {
     path: "/signup",
-    element: <SignUpPage />,
+    element: (
+      <AuthRoute>
+        <SignUpPage />
+      </AuthRoute>
+    ),
   },
   {
     path: "/",
